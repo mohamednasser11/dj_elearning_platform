@@ -35,7 +35,7 @@ Now that you've created the virtual environment, you need to activate it.
 ### Steps:
 - On **Windows**:
   ```bash
-  .env\Scriptsctivate
+  source venv\Scripts\activate
   ```
 
 - On **MacOS/Linux**:
