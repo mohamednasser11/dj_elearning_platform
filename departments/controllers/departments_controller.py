@@ -2,7 +2,6 @@ from django.http.response import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
 
-from departments.models.course_models import Course
 from departments.models.departments_models import Departments
 from departments.serializers import CourseSerializer, DepartementSerializer
 

@@ -7,8 +7,16 @@ from departments.controllers.departments_controller import DepratmentController
 # Create your views here.
 @csrf_exempt
 def departementsHandler(request):
+    try:
+        incoming_request = {
+        "GET": DepratmentController().getAllDepartments,
+        "POST": DepratmentController().createNewDepartment
+       }
 
-    if request.method == "GET":
-        return DepratmentController().getAllDepartments(request)
-    elif request.method == "POST":
-        return DepratmentController().createNewDepartment(request)
+        return incoming_request[request.method](request)
+    except:
+        print('Error Occured!')
+
+@csrf_exempt
+def coursesHandler(request):
+    NotImplemented
