@@ -60,7 +60,16 @@ Once the virtual environment is activated, you can install all the required depe
 
 This will install all the required libraries listed in `requirements.txt`.
 
-## 4. Deactivate the Virtual Environment
+## 4. Generate the Postgres database
+
+we will need to communicate with each other in order to keep up with the models migrations once you are notified that there is a new change in the models please migrate your database tables to the latest
+
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+## 5. Deactivate the Virtual Environment
 
 Once you're done working, you can deactivate the virtual environment by simply running:
 

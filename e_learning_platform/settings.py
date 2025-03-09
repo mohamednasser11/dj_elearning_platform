@@ -40,10 +40,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'courses'
+    'rest_framework',
+    'courses.apps.CoursesConfig',
+    'corsheaders',
+    'users'
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware'
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -74,13 +78,13 @@ TEMPLATES = [
 WSGI_APPLICATION = 'e_learning_platform.wsgi.application'
 
 
-# Database
+# Database Configurations
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),  # Database Configurations
+        'NAME': config('DB_NAME'),  
         'USER': config('DB_SUPER_USER'),
         'PASSWORD': config('DB_PASSWORD'),
         'HOST': config('DB_HOST'),
@@ -129,3 +133,8 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+#CORS config
+
+CORS_ORIGIN_ALLOW_ALL = True
+AUTH_USER_MODEL = 'users.User'
