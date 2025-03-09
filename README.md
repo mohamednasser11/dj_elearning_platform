@@ -3,6 +3,12 @@
 
 Welcome to the backend project! Please follow these steps to set up the environment and install the required dependencies.
 
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+- **Python 3.8 or higher**: Required to run the Django application.
+- **PostgreSQL 16 or higher**: Required as the database for this project.
+
 ## 1. Create a New Virtual Environment
 
 After pulling the project, you need to create a new virtual environment for the Python project.
