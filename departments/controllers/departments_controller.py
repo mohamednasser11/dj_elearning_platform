@@ -13,6 +13,7 @@ class DepratmentController:
         departements = Departments.objects.all()
         departements_serializer = DepartementSerializer(departements, many=True)
         return JsonResponse(departements_serializer.data, safe=False)
+    
     #POST:: create a new department
     @csrf_exempt
     def createNewDepartment(self, request):
