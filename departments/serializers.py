@@ -11,4 +11,4 @@ class CourseSerializer(serializers.ModelSerializer):
 class DepartementSerializer(serializers.ModelSerializer):
     class Meta:
         model= Departments
-        fields= ('departementId', 'name')
+        fields= ('departmentId', 'name')
