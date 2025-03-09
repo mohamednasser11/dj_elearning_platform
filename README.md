@@ -69,7 +69,15 @@ python manage.py makemigrations
 python manage.py migrate
 ```
 
-## 5. Deactivate the Virtual Environment
+## 5. Generate the Postgres database
+
+To start your django server use the following commands
+
+```bash
+python manage.py runserver
+```
+
+## 6. Deactivate the Virtual Environment
 
 Once you're done working, you can deactivate the virtual environment by simply running:
 
