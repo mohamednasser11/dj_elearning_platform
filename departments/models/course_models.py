@@ -33,4 +33,4 @@ class Course(models.Model):
     class Meta:
         verbose_name = "Course"
         verbose_name_plural = "Courses"
-        ordering = ["title"]
+        ordering = ["created_at"]

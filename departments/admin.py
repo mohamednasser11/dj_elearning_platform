@@ -13,9 +13,6 @@ class CourseAdmin(admin.ModelAdmin):
     # Fields to search by in the search bar
     search_fields = ('title', 'description')
     
-    # Fields to prepopulate (if applicable)
-    #prepopulated_fields = {'slug': ('title',)}  # Optional: If you have a slug field
-    
     # Fields to display in the detail/edit view
     fieldsets = (
         (None, {
