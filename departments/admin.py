@@ -1,7 +1,8 @@
 from django.contrib import admin
-from .models import Courses
+from .models.course_models import Course
+from .models.departments_models import Departments
 # Register your models here.
-@admin.register(Courses)
+@admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
     # Fields to display in the list view
     list_display = ('courseId', 'title', 'departmentId', 'instructorId', 'price', 'created_at')
@@ -31,3 +32,15 @@ class CourseAdmin(admin.ModelAdmin):
     
     # Ordering in the list view
     ordering = ('-created_at',)  # Newest courses first
+
+@admin.register(Departments)
+class DepartementAdmin(admin.ModelAdmin):
+    list_display = ('departmentId', 'name')
+    list_filter = ('departmentId', 'name')
+    search_fields = ('departmentId', 'name')
+
+    fieldsets = (
+        (None, {
+            'fields': ('departmentId', 'name')
+        }),
+    )

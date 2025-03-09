@@ -3,7 +3,7 @@ from django.core.validators import MinValueValidator
 
 
 # Create your models here.
-class Courses(models.Model):
+class Course(models.Model):
     courseId = models.AutoField(primary_key=True)
     title = models.CharField(max_length=255, verbose_name="Course Title")
     description = models.CharField(max_length=500, verbose_name="Course Description")
@@ -13,9 +13,9 @@ class Courses(models.Model):
         validators=[MinValueValidator(0)]
     )
     departmentId = models.ForeignKey(
-        "Department",
+        "Departments",
         on_delete=models.CASCADE,
-        related_name="courses",
+        related_name="course",
         verbose_name="Department",
     )
     instructorId = models.ForeignKey(
@@ -25,7 +25,7 @@ class Courses(models.Model):
         verbose_name="Instructor",
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Created At")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated At")
 
     def __str__(self):
         return self.title
@@ -34,16 +34,3 @@ class Courses(models.Model):
         verbose_name = "Course"
         verbose_name_plural = "Courses"
         ordering = ["title"]
-
-
-class Department(models.Model):
-    departementId = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=255, verbose_name='Departement Name')
-    
-    def __str__(self):
-        return self.name
-    
-    class Meta:
-        verbose_name = 'Department'
-        verbose_name_plural = 'Departments'
-
