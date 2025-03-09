@@ -8,12 +8,12 @@ from departments.controllers.departments_controller import DepratmentController
 @csrf_exempt
 def departementsHandler(request):
     try:
-        incoming_request = {
+        incoming_requests = {
         "GET": DepratmentController().getAllDepartments,
         "POST": DepratmentController().createNewDepartment
        }
 
-        return incoming_request[request.method](request)
+        return incoming_requests[request.method](request)
     except:
         print('Error Occured!')
 
