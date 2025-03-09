@@ -69,7 +69,7 @@ python manage.py makemigrations
 python manage.py migrate
 ```
 
-## 5. Generate the Postgres database
+## 5. Start Django app
 
 To start your django server use the following commands
 
