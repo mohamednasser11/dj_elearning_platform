@@ -3,7 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
 
 from departments.models.departments_models import Departments
-from departments.serializers import CourseSerializer, DepartementSerializer
+from e_learning_platform.departments.models.serializers import CourseSerializer, DepartementSerializer
 
 
 class DepratmentController:

@@ -10,12 +10,14 @@ def departementsHandler(request):
     try:
         incoming_requests = {
         "GET": DepratmentController().getAllDepartments,
-        "POST": DepratmentController().createNewDepartment
+        "POST": DepratmentController().createNewDepartment,
+        "PUT": NotImplemented,
+        "DELETE": NotImplemented,
        }
 
         return incoming_requests[request.method](request)
     except:
-        print('Error Occured!')
+        raise Exception('[Departments] Error Occured While processing your request')
 
 @csrf_exempt
 def coursesHandler(request):
