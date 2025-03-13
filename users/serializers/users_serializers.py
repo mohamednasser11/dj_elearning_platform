@@ -19,7 +19,7 @@ class UserSerializer(serializers.ModelSerializer):
             is_student=validated_data.get('is_student', False),
         )
         return user
-    
+
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField()
