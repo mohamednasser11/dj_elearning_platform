@@ -1,24 +1,18 @@
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework import generics
 
 from departments.controllers.departments_controller import DepratmentController
+from departments.models.departments_models import Departments
+from departments.models.serializers import DepartementSerializer
 
 
-# Create your views here.
-@csrf_exempt
-def departementsHandler(request):
-    try:
-        incoming_requests = {
-        "GET": DepratmentController().getAllDepartments,
-        "POST": DepratmentController().createNewDepartment,
-        "PUT": NotImplemented,
-        "DELETE": NotImplemented,
-       }
+class CreateDepartments(generics.ListCreateAPIView):
+    queryset = Departments.objects.all()
+    serializer_class = DepartementSerializer
 
-        return incoming_requests[request.method](request)
-    except:
-        raise Exception('[Departments] Error Occured While processing your request')
 
-@csrf_exempt
-def coursesHandler(request):
-    NotImplemented
+class UpdateDestroyDepartment(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Departments.objects.all()
+    serializer_class = DepartementSerializer
+    lookup_field = 'pk'

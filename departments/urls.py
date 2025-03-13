@@ -1,7 +1,7 @@
 from django.urls import path
-from . import views
+from .views import CreateDepartments, UpdateDestroyDepartment
 
 urlpatterns = [
-    path('', view=views.departementsHandler, name='departementsHandler'),
-    path('course/', view=views.coursesHandler, name='coursesHandler')
+    path('', CreateDepartments.as_view(), name='create-departements'),
+    path('<int:pk>/', UpdateDestroyDepartment.as_view(), name='delete-update-departements'),
 ]
