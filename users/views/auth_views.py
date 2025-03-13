@@ -4,6 +4,9 @@ from ..models.user_model import User
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+import logging
+
+logger = logging.getLogger(__name__)
 
 class UserCreateView(generics.CreateAPIView):
     queryset = User.objects.all()
