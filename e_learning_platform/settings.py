@@ -57,6 +57,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'middleware.logging_middleware.LoggingMiddleware',
+    'middleware.auth_middleware.AuthMiddleware',
 ]
 
 ROOT_URLCONF = 'e_learning_platform.urls'
