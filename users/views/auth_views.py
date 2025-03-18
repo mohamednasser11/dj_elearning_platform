@@ -4,9 +4,8 @@ from ..serializers.users_serializers import LoginSerializer, UserSerializer
 from ..models.user_model import User
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
 import logging
-import datetime
+from ..services.auth_service import AuthenticationService
 
 logger = logging.getLogger(__name__)
 
@@ -18,19 +17,29 @@ class UserCreateView(generics.CreateAPIView):
 
 class LoginView(APIView):
     def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data["user"]
+        email = request.data.get("email")
+        password = request.data.get("password")
 
-        # Generate JWT tokens
-        refresh = RefreshToken.for_user(user)
-        access_token = str(refresh.access_token)
-        refresh_token = str(refresh)
+        if not email or not password:
+            return Response({"error": "Email and password are required."}, status=400)
+
+        # Authenticate the user using email and password
+        user = AuthenticationService.authenticate(
+            request=request, email=email, password=password
+        )
+        if user is None:
+            return Response({"error": "Invalid email or password."}, status=400)
+
+        # Generate tokens with custom claims
+        tokens = AuthenticationService.generate_tokens_for_user(user)
+
+        if tokens is None:
+            return Response({"error": "UnAuthorized"}, status=401)
 
         response = Response(
             {
-                "access_token": access_token,
-                "refresh_token": refresh_token,
+                "access_token": tokens["access"],
+                "refresh_token": tokens["refresh"],
                 "user": {
                     "id": user.id,
                     "username": user.username,
@@ -38,17 +47,18 @@ class LoginView(APIView):
                     "is_instructor": user.is_instructor,
                     "is_student": user.is_student,
                 },
-            }
+            },
+            status=202,
         )
 
         response.set_cookie(
             key="token",  # Cookie name
-            value=access_token,  # Cookie value
+            value=tokens["access"],  # Cookie value
             httponly=True,  # Prevent client-side JavaScript from accessing the cookie
             secure=settings.DEBUG is False,  # Send only over HTTPS in production
-            samesite='lax',  # Prevent CSRF attacks
+            samesite="lax",  # Prevent CSRF attacks
             max_age=86400,  # Cookie expiry time in seconds (1 day)
             path="/",  # Cookie accessible across the entire domain
-            )
+        )
 
         return response

@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 from decouple import config
+import datetime
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -142,7 +143,15 @@ CORS_ALLOWED_ORIGINS = ["http://localhost:3000", "http://localhost:5173"]
 
 AUTH_USER_MODEL = "users.User"
 
-# Logging Settings
+import os
+from pathlib import Path
+
+# Define the logs directory
+LOGS_DIR = BASE_DIR / "logs"
+
+# Create the logs directory if it doesn't exist
+os.makedirs(LOGS_DIR, exist_ok=True)
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -150,11 +159,15 @@ LOGGING = {
         "console": {
             "class": "logging.StreamHandler",
         },
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": LOGS_DIR / "debug.log",  # Full path to the log file
+        },
     },
     "loggers": {
         "": {  # Root logger
-            "handlers": ["console"],
-            "level": "INFO",  # Set the log level to INFO
+            "handlers": ["console", "file"],
+            "level": "INFO",
             "propagate": True,
         },
     },
@@ -166,3 +179,21 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
 }
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(minutes=60),  # Token expiry time
+    'REFRESH_TOKEN_LIFETIME': datetime.timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'ALGORITHM': 'HS256',  # Signing algorithm
+    'SIGNING_KEY': config("SIGNING_KEY"),
+    'VERIFYING_KEY': None,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    "TOKEN_OBTAIN_SERIALIZER": "my_app.serializers.MyTokenObtainPairSerializer",
+}
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  # Default backend
+    'your_app.backends.EmailAuthBackend',  # Custom email backend
+]
