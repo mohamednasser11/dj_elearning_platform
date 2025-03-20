@@ -1,24 +1,36 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Permission
 from ..models.user_model import User
-from django.contrib.auth import authenticate
-from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate, get_user_model
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
-        fields = ['username', 'password', 'email', 'is_instructor', 'is_student']
+        fields = ['username', 'password', 'first_name', 'last_name' ,'email', 'is_instructor', 'is_student']
 
     def create(self, validated_data):
+
         user = User.objects.create_user(
             username=validated_data['username'],
             password=validated_data['password'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name'],
             email=validated_data.get('email', ''),
             is_instructor=validated_data.get('is_instructor', False),
             is_student=validated_data.get('is_student', False),
         )
+
+        if(user.is_student):
+            user.user_permissions.add(Permission.objects.get('view_course'))
+        if(user.is_instructor):
+            user.user_permissions.add(Permission.objects.get('view_course'))
+            user.user_permissions.add(Permission.objects.get('edit_course'))
+            user.user_permissions.add(Permission.objects.get('create_course'))
+        
+        
+        user.save()
         return user
 
 class LoginSerializer(serializers.Serializer):

@@ -1,6 +1,8 @@
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import BaseBackend
+import jwt
+from decouple import config
 
 class AuthenticationService(BaseBackend):
     def get_user(self, user_id):
@@ -43,3 +45,7 @@ class AuthenticationService(BaseBackend):
             'access': str(refresh.access_token),
             'refresh': str(refresh),
         }
+
+    @staticmethod
+    def decode_jwt_token(token):
+        return jwt.decode(token, config("SIGNING_KEY"), ['HS256'])

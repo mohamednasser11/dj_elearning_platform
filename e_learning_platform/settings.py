@@ -195,5 +195,4 @@ SIMPLE_JWT = {
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',  # Default backend
-    'your_app.backends.EmailAuthBackend',  # Custom email backend
 ]
