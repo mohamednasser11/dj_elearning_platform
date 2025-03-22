@@ -1,4 +1,6 @@
 from django.http import JsonResponse
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from .config import VALID_URLS
 
 
 class AuthMiddleware:
@@ -11,12 +13,22 @@ class AuthMiddleware:
         return response
 
     def auth_check(self, request):
-
         if (
-            (request.path != "/api/v1/users/login/" or request.path != "/api/v1/users/register/")
+            request.path not in VALID_URLS
             and "Authorization" not in request.headers
+            and self.is_token_valid(request)
         ):
             return JsonResponse(
                 {"error": "unAuthorized!"},
                 status=401,
             )
+        
+    def is_token_valid(slef, request):
+        JWTAuthenticator = JWTAuthentication()
+
+        decoded_token = JWTAuthenticator.authenticate(request=request)
+
+        if decoded_token is not None:
+            return True
+        else:
+            return False
