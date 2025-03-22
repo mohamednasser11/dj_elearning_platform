@@ -21,14 +21,6 @@ class UserSerializer(serializers.ModelSerializer):
             is_instructor=validated_data.get('is_instructor', False),
             is_student=validated_data.get('is_student', False),
         )
-
-        if(user.is_student):
-            user.user_permissions.add(Permission.objects.get('view_course'))
-        if(user.is_instructor):
-            user.user_permissions.add(Permission.objects.get('view_course'))
-            user.user_permissions.add(Permission.objects.get('edit_course'))
-            user.user_permissions.add(Permission.objects.get('create_course'))
-        
         
         user.save()
         return user
