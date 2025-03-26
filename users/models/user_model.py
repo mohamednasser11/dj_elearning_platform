@@ -8,6 +8,15 @@ class User(AbstractUser):
     email = models.EmailField(unique=True, verbose_name='Email Address')
     is_instructor = models.BooleanField(default=False, verbose_name='Is Instructor')
     is_student = models.BooleanField(default=False, verbose_name='Is Student')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Created At')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Updated At')
+    courses = models.ManyToManyField(
+        'departments.Course',
+        through='users.UserCoursePurchase',  # <-- Key change: Use 'app_name.ModelName'
+        related_name='enrolled_users',
+        blank=True,
+        verbose_name='Purchased Courses'
+    )
 
     def __str__(self):
         return self.username
