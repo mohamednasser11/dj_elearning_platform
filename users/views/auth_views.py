@@ -17,27 +17,35 @@ class UserCreateView(APIView):
     serializer_class = UserSerializer
 
     def post(self, request):
-        if request.method == 'POST':
+        if request.method == "POST":
             body = json.loads(request.body)
             form = CustomUserCreationForm(body)
             if form.is_valid():
                 user = form.save()
-                return Response({'success': True, 'user_id': user.id})
+                return Response({"success": True, "user_id": user.id})
             else:
-                return Response({
-                    'success': False,
-                    'errors': form.get_validation_errors()
-                }, status=400)
-        return Response({'error': 'Method not allowed'}, status=405)
+                return Response(
+                    {"success": False, "errors": form.get_validation_errors()},
+                    status=400,
+                )
+        return Response({"error": "Method not allowed"}, status=405)
 
 
 class LoginView(APIView):
     serializer_class = LoginSerializer
 
     def post(self, request):
-        email = request.data.get("email")
-        password = request.data.get("password")
+        try:
+            # Manually parse the body if request.data fails
+            raw_data = json.loads(
+                request.body.decode("utf-8")
+            )  # Manually decode and parse JSON
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON Decode Error: {str(e)}")
+            return Response({"error": "Invalid JSON format."}, status=400)
 
+        email = raw_data.get("email")
+        password = raw_data.get("password")
         if not email or not password:
             return Response({"error": "Email and password are required."}, status=400)
 
@@ -108,7 +116,8 @@ class LogoutView(APIView):
             key="token",  # Cookie name (must match the original cookie name)
             value="",  # Set the value to an empty string
             httponly=True,  # Must match the original cookie's HttpOnly flag
-            secure=settings.DEBUG is False,  # Must match the original cookie's Secure flag
+            secure=settings.DEBUG
+            is False,  # Must match the original cookie's Secure flag
             samesite="lax",  # Must match the original cookie's SameSite attribute
             max_age=0,  # Set max_age to 0 to expire the cookie immediately
             path="/",  # Must match the original cookie's path

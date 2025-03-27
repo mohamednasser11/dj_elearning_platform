@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models.course_models import Course
+from .models.courses_models.course_models import Course
 from .models.departments_models import Departments
 # Register your models here.
 @admin.register(Course)
