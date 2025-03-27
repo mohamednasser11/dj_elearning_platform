@@ -1,6 +1,8 @@
-from django.http import JsonResponse
+from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.exceptions import AuthenticationFailed 
 from .config import VALID_URLS
+from django.http import JsonResponse
 
 
 class AuthMiddleware:
@@ -8,27 +10,28 @@ class AuthMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        self.auth_check(request)
+        try:
+            self.auth_check(request)
+        except AuthenticationFailed as e:
+            return self.unauthorized_response(e)
+        
         response = self.get_response(request)
         return response
 
     def auth_check(self, request):
         if (
             request.path not in VALID_URLS
-            and "Authorization" not in request.headers
-            and self.is_token_valid(request)
+            and ("Authorization" not in request.headers
+            or self.is_token_valid(request) == False)
         ):
-            return JsonResponse(
-                {"error": "unAuthorized!"},
-                status=401,
-            )
+            print(f"Authorized Access! {self.is_token_valid(request)}")
+            raise AuthenticationFailed("UnAuthorized Access!", code="unauthorized")
         
-    def is_token_valid(slef, request):
+    def is_token_valid(self, request):
         JWTAuthenticator = JWTAuthentication()
+        decoded_token = JWTAuthenticator.get_validated_token(request.headers["Authorization"])
 
-        decoded_token = JWTAuthenticator.authenticate(request=request)
-
-        if decoded_token is not None:
-            return True
-        else:
-            return False
+        return decoded_token is not None
+        
+    def unauthorized_response(self, message):
+        return JsonResponse({"error": str(message)}, status=401)

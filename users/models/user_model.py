@@ -12,11 +12,19 @@ class User(AbstractUser):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Updated At')
     courses = models.ManyToManyField(
         'departments.Course',
-        through='users.UserCoursePurchase',  # <-- Key change: Use 'app_name.ModelName'
+        through='departments.UserCoursePurchase',  # <-- Key change: Use 'app_name.ModelName'
         related_name='enrolled_users',
         blank=True,
         verbose_name='Purchased Courses'
     )
+    departments_taught = models.ManyToManyField(
+        'departments.Departments',  # Reference to Department model
+        related_name='instructors',
+        blank=True,
+        verbose_name='Departments Taught'
+    )
+
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='Balance')
 
     def __str__(self):
         return self.username
