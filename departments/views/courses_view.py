@@ -40,7 +40,7 @@ class CoursesView(APIView):
         try:
             course = self.queryset.get(id=courseId)
             course.delete()
-            return Response(status=204)
+            return Response(status=status.HTTP_204_NO_CONTENT)
         except Course.DoesNotExist:
             return Response({"message": "Course Does not exist"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
