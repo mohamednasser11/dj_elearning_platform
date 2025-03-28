@@ -22,11 +22,11 @@ class CoursesView(APIView):
                 offset = request.data.get('offset') or 0
                 serializer = self.serializer_class(courses, many=True)
                 limited_data = serializer.data[offset:offset+limit]
-                return Response(limited_data)
+                return Response(limited_data, status=status.HTTP_200_OK)
         except Course.DoesNotExist:
-            return Response({"message": "Course Does not exist"},status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": "Course Does not exist"}, status=status.HTTP_404_NOT_FOUND)
         
-    def post(self, request): 
+    def post(self, request):
         try:
             form = CoursePayloadValidation(request.data)
             if form.is_valid():

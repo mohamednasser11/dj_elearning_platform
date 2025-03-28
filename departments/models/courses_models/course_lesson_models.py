@@ -2,11 +2,11 @@ from django.db import models
 from .course_models import Course
 
 class CoursesLesson(models.Model):
+    lessonId = models.AutoField(primary_key=True)
     courseId = models.ForeignKey(Course, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     description = models.TextField()
     video = models.FileField(upload_to='courses_lessons/videos/', blank=False)
-    duration = models.DurationField() 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
