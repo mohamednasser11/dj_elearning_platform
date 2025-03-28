@@ -48,4 +48,5 @@ class AuthenticationService(BaseBackend):
 
     @staticmethod
     def decode_jwt_token(token):
+        [bearer, token] = token.split(' ')
         return jwt.decode(token, config("SIGNING_KEY"), ['HS256'])
