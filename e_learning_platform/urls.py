@@ -17,10 +17,10 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import include, path
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/departments/", include("departments.urls")),
+    path("api/v1/courses/", include("departments.courses_urls")),
     path("api/v1/users/", include("users.urls")),
 ]
