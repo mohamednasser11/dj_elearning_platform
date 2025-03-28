@@ -22,3 +22,11 @@ class UpdateDestroyDepartment(generics.RetrieveUpdateDestroyAPIView):
     def patch(self, request, *args, **kwargs):
         super().patch(request, *args, **kwargs)
         return Response({"message": "updated successfully"}, status=status. HTTP_204_NO_CONTENT)
+    
+    def delete(self, request, *args, **kwargs):
+        super().delete(request, *args, **kwargs)
+        return Response({"message": "deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    
+    def get(self, request, *args, **kwargs):
+        super().get(request, *args, **kwargs)
+        return Response({"message": "retrieved successfully"}, status=status.HTTP_200_OK)
