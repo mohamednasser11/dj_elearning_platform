@@ -29,8 +29,10 @@ class AuthMiddleware:
         
     def is_token_valid(self, request):
         JWTAuthenticator = JWTAuthentication()
-        unValidated_token = request.headers["Authorization"].split(' ')[1] if "Authorization" in request.headers else None
+        [bearer, unValidated_token] = request.headers["Authorization"].split(' ') if "Authorization" in request.headers else None
+        print(f"Unvalidated Token: {unValidated_token}")
         decoded_token = JWTAuthenticator.get_validated_token(unValidated_token)
+        print(f"decoded_token: {decoded_token}")
 
         return decoded_token is not None
         
