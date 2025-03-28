@@ -93,7 +93,7 @@ class LoginView(APIView):
 
 class LogoutView(APIView):
     def post(self, request):
-        userToken = request.headers.get("authorization")
+        userToken = request.headers.get("Authorization")
         if not userToken:
             return Response(
                 {"error": "unAuthorized!"},
