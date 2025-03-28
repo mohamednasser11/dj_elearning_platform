@@ -1,7 +1,6 @@
 from django.conf import settings
-from rest_framework import generics
+from rest_framework import status
 from ..serializers.users_serializers import LoginSerializer, UserSerializer
-from ..models.user_model import User
 from rest_framework.views import APIView
 from rest_framework.response import Response
 import logging
@@ -26,9 +25,9 @@ class UserCreateView(APIView):
             else:
                 return Response(
                     {"success": False, "errors": form.get_validation_errors()},
-                    status=400,
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
-        return Response({"error": "Method not allowed"}, status=405)
+        return Response({"error": "Method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class LoginView(APIView):
@@ -42,25 +41,25 @@ class LoginView(APIView):
             )  # Manually decode and parse JSON
         except json.JSONDecodeError as e:
             logger.error(f"JSON Decode Error: {str(e)}")
-            return Response({"error": "Invalid JSON format."}, status=400)
+            return Response({"error": "Invalid JSON format."}, status=status.HTTP_400_BAD_REQUEST)
 
         email = raw_data.get("email")
         password = raw_data.get("password")
         if not email or not password:
-            return Response({"error": "Email and password are required."}, status=400)
+            return Response({"error": "Email and password are required."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Authenticate the user using email and password
         user = AuthenticationService.authenticate(
             request=request, email=email, password=password
         )
         if user is None:
-            return Response({"error": "Invalid email or password."}, status=400)
+            return Response({"error": "Invalid email or password."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Generate tokens with custom claims
         tokens = AuthenticationService.generate_tokens_for_user(user)
 
         if tokens is None:
-            return Response({"error": "UnAuthorized"}, status=401)
+            return Response({"error": "UnAuthorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
         login(request=request, user=user)
 
@@ -98,7 +97,7 @@ class LogoutView(APIView):
         if not userToken:
             return Response(
                 {"error": "unAuthorized!"},
-                status=401,
+                status=status.HTTP_401_UNAUTHORIZED,
             )
 
         user = AuthenticationService.decode_jwt_token(userToken)
@@ -109,7 +108,7 @@ class LogoutView(APIView):
             {
                 "user": {"username": user.get("username"), "message": "Logged out!"},
             },
-            status=201,
+            status=status.HTTP_200_OK,
         )
 
         response.set_cookie(
@@ -122,7 +121,6 @@ class LogoutView(APIView):
             max_age=0,  # Set max_age to 0 to expire the cookie immediately
             path="/",  # Must match the original cookie's path
         )
-        print(f"RESPONSE COOKIE==> {response.cookies}")
 
         logout(request=request)
 
