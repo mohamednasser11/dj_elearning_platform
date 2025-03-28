@@ -1,4 +1,4 @@
-from rest_framework.response import Response
+from rest_framework import status 
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.exceptions import AuthenticationFailed 
 from .config import VALID_URLS
@@ -22,16 +22,17 @@ class AuthMiddleware:
         if (
             request.path not in VALID_URLS
             and ("Authorization" not in request.headers
-            or self.is_token_valid(request) == False)
+            or not self.is_token_valid(request))
         ):
             print(f"Authorized Access! {self.is_token_valid(request)}")
             raise AuthenticationFailed("UnAuthorized Access!", code="unauthorized")
         
     def is_token_valid(self, request):
         JWTAuthenticator = JWTAuthentication()
-        decoded_token = JWTAuthenticator.get_validated_token(request.headers["Authorization"])
+        unValidated_token = request.headers["Authorization"].split(' ')[1] if "Authorization" in request.headers else None
+        decoded_token = JWTAuthenticator.get_validated_token(unValidated_token)
 
         return decoded_token is not None
         
     def unauthorized_response(self, message):
-        return JsonResponse({"error": str(message)}, status=401)
+        return JsonResponse({"error": str(message)}, status=status.HTTP_401_UNAUTHORIZED)
