@@ -8,7 +8,6 @@ class LoggingMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        print("Middleware is being called!")  # Debug statement
         self.log_request(request)
 
         response = self.get_response(request)
