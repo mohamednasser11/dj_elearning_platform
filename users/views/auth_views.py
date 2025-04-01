@@ -1,13 +1,13 @@
+import logging
+import json
 from django.conf import settings
 from rest_framework import status
-from ..serializers.users_serializers import LoginSerializer, UserSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
-import logging
-from ..services.auth_service import AuthenticationService
 from django.contrib.auth import login, logout
+from ..serializers.users_serializers import LoginSerializer, UserSerializer
+from ..services.auth_service import AuthenticationService
 from ..form_validations.user_creation_validation import CustomUserCreationForm
-import json
 
 logger = logging.getLogger(__name__)
 

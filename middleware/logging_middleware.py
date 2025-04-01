@@ -1,5 +1,6 @@
 # middleware/logging_middleware.py
 import logging
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +18,12 @@ class LoggingMiddleware:
         return response
 
     def log_request(self, request):
-        logger.info(
-            f"Incoming Request: {request.method} {request.path} - User: {request.user}"
-        )
+        if settings.DEBUG:
+            logger.info(
+                f"Incoming Request: {request.method} payload: {request.data} {request.path} - User: {request.user}"
+            )
+        else:
+            logger.info(f"Incoming Request: {request.method} {request.path} - User: {request.user}")
 
     def log_response(self, request, response):
         logger.info(
