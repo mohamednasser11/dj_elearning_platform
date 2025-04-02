@@ -24,7 +24,7 @@ class AuthMiddleware:
             and ("Authorization" not in request.headers
             or not self.is_token_valid(request))
         ):
-            print(f"Authorized Access! {self.is_token_valid(request)}")
+            print(f"Method ==> {request.path}")
             raise AuthenticationFailed("UnAuthorized Access!", code="unauthorized")
         
     def is_token_valid(self, request):
