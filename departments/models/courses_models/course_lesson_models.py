@@ -1,8 +1,9 @@
+import uuid
 from django.db import models
 from .course_models import Course
 
 class CoursesLesson(models.Model):
-    lessonId = models.AutoField(primary_key=True)
+    lessonId = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     courseId = models.ForeignKey(Course, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     description = models.TextField()
