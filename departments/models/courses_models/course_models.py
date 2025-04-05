@@ -24,6 +24,14 @@ class Course(models.Model):
         related_name="courses_taught",
         verbose_name="Instructor",
     )
+    rating = models.DecimalField(default=0, max_digits=3, decimal_places=1)
+    number_of_students = models.PositiveIntegerField(default=0)
+    image_url = models.URLField(
+        max_length=500,
+        verbose_name="Course Image URL",
+        blank=True,
+        null=True
+    )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated At")
 
