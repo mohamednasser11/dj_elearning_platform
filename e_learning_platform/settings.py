@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     "corsheaders",
     "departments",
     "users",
-    "tools"
+    "tools",
+    "django_extensions",
 ]
 
 MIDDLEWARE = [
@@ -200,3 +201,9 @@ AUTHENTICATION_BACKENDS = [
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+
+GRAPH_MODELS ={
+'all_applications': True,
+'graph_models': True,
+}

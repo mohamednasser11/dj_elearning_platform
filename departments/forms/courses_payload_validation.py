@@ -39,8 +39,8 @@ class CoursePayloadValidation(forms.ModelForm):
         empty_label=None
     )
 
-    rating = forms.DecimalField(max_digits=3, decimal_places=2, required=False, default=0)
-    number_of_students = forms.IntegerField(required=False, default=0)
+    rating = forms.DecimalField(max_digits=3, decimal_places=2, required=False)
+    number_of_students = forms.IntegerField(required=False)
     image_url = forms.URLField(required=True, max_length=500)
 
     class Meta:
