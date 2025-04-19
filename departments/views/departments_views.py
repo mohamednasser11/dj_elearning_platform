@@ -1,6 +1,5 @@
 from rest_framework import generics, status
 from rest_framework.response import Response 
-from rest_framework.views import APIView
 from departments.models.departments_models import Departments
 from ..serializers.departments_serializer import DepartmentSerializer
 
@@ -10,8 +9,10 @@ class CreateDepartments(generics.ListCreateAPIView):
     serializer_class = DepartmentSerializer
 
     def post(self, request):
-        super().post(request)
-        return Response({"message": "created successfully"}, status=status.HTTP_201_CREATED)
+        if self.serializer_class.is_valid():
+            super().post(request)
+            return Response({"message": "created successfully"}, status=status.HTTP_201_CREATED)
+        return Response({"message": "invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UpdateDestroyDepartment(generics.RetrieveUpdateDestroyAPIView):

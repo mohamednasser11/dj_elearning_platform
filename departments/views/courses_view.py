@@ -1,10 +1,9 @@
 from rest_framework.views import APIView
 from rest_framework import status
+from rest_framework.response import Response
 from users.models.user_model import User
 from ..models import Course
 from ..serializers import CourseSerializer
-from rest_framework.response import Response
-from ..forms import CoursePayloadValidation
 
 class CoursesView(APIView):
     queryset = Course.objects.all()
@@ -28,11 +27,10 @@ class CoursesView(APIView):
         
     def post(self, request):
         try:
-            form = CoursePayloadValidation(request.data)
-            if form.is_valid():
-                form.save()
-                return Response(form.cleaned_data, status=status.HTTP_201_CREATED)
-            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+            if self.serializer_class.is_valid():
+                self.serializer_class.save()
+                return Response(self.serializer_class.cleaned_data, status=status.HTTP_201_CREATED)
+            return Response(self.serializer_class.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
@@ -49,11 +47,10 @@ class CoursesView(APIView):
     def patch(self, request, courseId):
         try:
             course = self.queryset.get(id=courseId)
-            form = CoursePayloadValidation(request.data, instance=course)
-            if form.is_valid():
-                form.save()
-                return Response(form.cleaned_data, status=status.HTTP_200_OK)
-            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+            if self.serializer_class.is_valid() and course is not None:
+                self.serializer_class.save()
+                return Response(self.serializer_class.data, status=status.HTTP_200_OK)
+            return Response(self.serializer_class.errors, status=status.HTTP_400_BAD_REQUEST)
         except Course.DoesNotExist:
             return Response({"message": "Course Does not exist"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
