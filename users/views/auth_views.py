@@ -6,7 +6,6 @@ from rest_framework.response import Response
 import logging
 from ..services.auth_service import AuthenticationService
 from django.contrib.auth import login, logout
-from ..form_validations.user_creation_validation import CustomUserCreationForm
 import json
 
 logger = logging.getLogger(__name__)
@@ -18,13 +17,13 @@ class UserCreateView(APIView):
     def post(self, request):
         if request.method == "POST":
             body = json.loads(request.body)
-            form = CustomUserCreationForm(body)
-            if form.is_valid():
-                user = form.save()
+            serialized_data = self.serializer_class(data=body)
+            if serialized_data.is_valid():
+                user = serialized_data.save()
                 return Response({"success": True, "user_id": user.id})
             else:
                 return Response(
-                    {"success": False, "errors": form.get_validation_errors()},
+                    {"success": False, "errors": serialized_data.errors},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
         return Response({"error": "Method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
