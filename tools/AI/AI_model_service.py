@@ -17,11 +17,11 @@ class AIModelService:
         except Exception as e:
             raise Exception(f"Failed to generate response: {e}")
 
-    def chat(self, message, model="gemma3", options=None):
+    def chat(self, messages, model="gemma3", options=None):
         try:
             return self.client.chat(
                 model=model,
-                messages=[{"role": "user", "content": message}],
+                messages=messages,
                 stream=True,
                 options=options or {},
             )
