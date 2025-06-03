@@ -17,8 +17,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         pass
 
     async def receive(self, text_data=None, bytes_data=None):
-        async def send(status, message=""):
-            await self.send(json.dumps({"status": status, "message": message}))
+        async def send(type, message=""):
+            await self.send(json.dumps({"type": type, "message": message}))
 
         try:
             if bytes_data:
