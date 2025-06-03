@@ -12,12 +12,18 @@ from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 from chat.urls import websocket_urlpatterns
 
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "e_learning_platform.settings")
+
+
+def get_websocket_application():
+    from middleware.websocket_auth_middleware import WebSocketJWTAuthMiddleware
+
+    return WebSocketJWTAuthMiddleware(URLRouter(websocket_urlpatterns))
+
 
 application = ProtocolTypeRouter(
     {
         "http": get_asgi_application(),
-        "websocket": URLRouter(websocket_urlpatterns),
+        "websocket": get_websocket_application(),
     }
 )
