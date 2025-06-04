@@ -1,5 +1,5 @@
 from django.db import models
-from ...users.models.user_model import User
+from users.models.user_model import User
 
 
 class FileUploadModel(models.Model):
