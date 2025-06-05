@@ -203,7 +203,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 
-GRAPH_MODELS ={
+GRAPH_MODELS = {
 'all_applications': True,
 'graph_models': True,
 }
