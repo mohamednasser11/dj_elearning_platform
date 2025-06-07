@@ -4,10 +4,12 @@ from channels.consumer import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.layers import asyncio
 from chat.models import ChatMessage, ChatSession
+from departments.models.courses_models.course_lesson_models import CoursesLesson
+from departments.models.courses_models.course_models import Course
+from departments.models.courses_models.user_courses_purchase_model import (
+    UserCoursePurchase,
+)
 from tools.AI.AI_model_service import AIModelService
-
-
-MAX_HISTORY_LENGTH = 20
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -15,18 +17,30 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
         self.user = self.scope["user"]
-        # self.course =
-
-        self.session = await self._get_session()
-        if self.session and (await self._is_session_owner()):
-            await self._send_error("Unauthorized")
+        self.course = await self._get_course()
+        if not self.course:
+            await self._send_error("Course does not exist")
             return
 
-        if self.session:
-            history = list(await self._get_history())
-            self.history = history[:MAX_HISTORY_LENGTH]
-            await self._send("session.resume", {"history": history})
+        if not await self._is_enrolled():
+            await self._send_error("User not enrolled")
+            return
+
+        if self._has_qs("session_id"):
+            self.session = await self._get_session()
+
+            if not self.session:
+                await self._send_error("Session does not exist")
+                return
+
+            if not await self._is_session_owner():
+                await self._send_error("Unauthorized")
+                return
+
+            self.history = await self._get_history()
+            await self._send("session.resume", {"history": self.history})
         else:
+            self.session = None
             self.history = []
 
     async def disconnect(self, code):
@@ -36,6 +50,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             if not self.session:
                 self.session = await self._create_session()
+                await self._append_history(
+                    "system", await self._generate_system_prompt()
+                )
+                self.history = await self._get_history()
                 await self._send("session.new", {"session_id": str(self.session.id)})
 
             if bytes_data:
@@ -52,9 +70,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self._send_error("Empty message")
                 return
 
-            await self._append_history("user", inbound_message)
-
             await self._send("stream.start")
+
+            await self._append_history("user", inbound_message)
 
             model = AIModelService()
             stream = model.chat(self.history)
@@ -77,23 +95,50 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             await self._send_error(str(e))
 
-    @database_sync_to_async
-    def _get_session(self):
+    def _has_qs(self, key):
         query_string = self.scope.get("query_string", b"").decode()
         query_params = parse_qs(query_string)
-        session_id = query_params.get("session_id", [None])[0]
-        if session_id:
-            return ChatSession.objects.get(id=session_id, user=self.user)
+        return query_params.get(key, [None])[0] != None
+
+    def _get_from_qs(self, key):
+        query_string = self.scope.get("query_string", b"").decode()
+        query_params = parse_qs(query_string)
+        return query_params.get(key, [None])[0]
+
+    @database_sync_to_async
+    def _get_course(self):
+        course_id = self._get_from_qs("course_id")
+        if course_id:
+            return Course.objects.get(courseId=course_id)
         else:
             return None
 
     @database_sync_to_async
+    def _get_session(self):
+        try:
+            session_id = self._get_from_qs("session_id")
+            if session_id:
+                return ChatSession.objects.get(
+                    id=session_id, user=self.user, course=self.course
+                )
+            else:
+                return None
+        except:
+            return None
+
+    @database_sync_to_async
     def _create_session(self):
-        return ChatSession.objects.create(user=self.user)
+        return ChatSession.objects.create(user=self.user, course=self.course)
+
+    @database_sync_to_async
+    def _is_enrolled(self):
+        return UserCoursePurchase.objects.filter(
+            user=self.user, course=self.course
+        ).exists()
 
     @database_sync_to_async
     def _is_session_owner(self):
-        return self.session.user != self.user
+        return self.session.user == self.user
 
     @database_sync_to_async
     def _get_history(self):
@@ -108,8 +153,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def _append_history(self, role, content):
         ChatMessage.objects.create(session=self.session, role=role, content=content)
         self.history.append({"role": role, "content": content})
-        if len(self.history) > MAX_HISTORY_LENGTH:
-            self.history.pop(0)
 
     async def _send(self, type, data={}):
         await self.send(json.dumps({"type": type, **data}))
@@ -121,3 +164,41 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self._send_message("error", message)
         if close:
             await self.close(code)
+
+    @database_sync_to_async
+    def _generate_system_prompt(self):
+        lessons = CoursesLesson.objects.filter(courseId=self.course).order_by(
+            "created_at"
+        )
+
+        lessons_data = []
+        for lesson in lessons:
+            lessons_data.append(
+                {
+                    "lesson_title": lesson.title,
+                    "lesson_description": lesson.description,
+                }
+            )
+
+        prompt = f"""
+        You are an advanced AI teaching assistant with comprehensive knowledge about all courses and their lesson content. Your capabilities include:
+
+        1. COURSE KNOWLEDGE BASE:
+        - Course Title: {self.course.title}
+        - Course Description: {self.course.description}
+        - Instructor: {self.course.instructorId.first_name} {self.course.instructorId.last_name}
+        - Department: {self.course.departmentId.name}
+
+        2. LESSON LIBRARY:
+        {json.dumps(lessons_data, indent=4)}
+
+        3. ASSISTANT PROTOCOLS:
+        - Always reference specific lesson content when answering questions
+        - Break down complex topics using the structured lesson progression
+        - Suggest which lessons to review based on the user's question
+        - Maintain academic integrity while helping students understand concepts
+        - Offer multiple explanations for difficult topics
+        - Guide users through the course curriculum in logical sequences
+        """
+
+        return prompt
