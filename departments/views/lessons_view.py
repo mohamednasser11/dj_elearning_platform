@@ -4,10 +4,11 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from ..models import Departments, Course, CoursesLesson
 from ..serializers.lessons_serialzer import LessonSerializer
+from users.utils.permission_management import InstructorPermission, StudentPermission
 
 
 class LessonsView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, InstructorPermission | StudentPermission]
 
     def get(self, request, courseId, lessonId=None):
         try:

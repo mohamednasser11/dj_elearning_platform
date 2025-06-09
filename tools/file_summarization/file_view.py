@@ -7,11 +7,13 @@ from ..services.fileProcessors.file_processors import FileProcessorContext
 from ..services.fileProcessors.pdf_file_processor import PDFProcessor
 from ..services.fileProcessors.text_file_processor import TextFileProcessor
 from ..AI.AI_model_service import AIModelService
+from users.utils.permission_management import InstructorPermission, StudentPermission
 
 
 class FileSummerizationView(APIView):
     queryset = FileUploadModel.objects.all()
     serializer_class = FileSerializer
+    permission_classes = [StudentPermission]
 
     def get(self, request, fileId):
         try:
@@ -35,9 +37,11 @@ class FileSummerizationView(APIView):
     def post(self, request):
         try:
             fileSerializer = self.serializer_class(data=request.data)
-            print(f"fileSerializer: {fileSerializer}")
             if fileSerializer.is_valid():
                 # file_processor = None
+                request.session["file_id"] = fileSerializer.validated_data[
+                    "file"
+                ].fileId
                 file_processor_types = {
                     "application/pdf": PDFProcessor(),
                     "application/text": TextFileProcessor(),
@@ -68,6 +72,7 @@ class FileSummerizationView(APIView):
                     [Document] {processedText}
                     [User] Summarize the key points in bullet points.
                     """
+                    request.session["prompt_template"] = prompt_template
                     response = ai_model_service.generate(prompt_template)
                     return Response(response, status=status.HTTP_201_CREATED)
                 else:
@@ -103,10 +108,10 @@ class FileSummerizationView(APIView):
             return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-
 class QuestiouGenerationView(APIView):
     queryset = FileUploadModel.objects.all()
     serializer_class = FileSerializer
+    permission_classes = [InstructorPermission | StudentPermission]
 
     def post(self, request):
         try:
@@ -156,4 +161,3 @@ class QuestiouGenerationView(APIView):
                 )
         except Exception as e:
             return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-

@@ -8,7 +8,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username', 'password', 'first_name', 'last_name' ,'email', 'is_instructor', 'is_student']
+        fields = ['username', 'password', 'first_name', 'last_name' ,'email', 'is_student']
 
     def create(self, validated_data):
 
@@ -18,8 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
             first_name=validated_data['first_name'],
             last_name=validated_data['last_name'],
             email=validated_data.get('email', ''),
-            is_instructor=validated_data.get('is_instructor', False),
-            is_student=validated_data.get('is_student', False),
+            is_student=validated_data.get('is_student', True),
         )
         
         user.save()

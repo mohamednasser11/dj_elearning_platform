@@ -35,7 +35,6 @@ class AuthenticationService(BaseBackend):
         # Add custom claims to the token
         refresh['username'] = user.username
         refresh['email'] = user.email
-        refresh['is_instructor'] = user.is_instructor
         refresh['is_student'] = user.is_student
         refresh['first_name'] = user.first_name
         refresh['last_name'] = user.last_name
