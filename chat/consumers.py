@@ -98,7 +98,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def _has_qs(self, key):
         query_string = self.scope.get("query_string", b"").decode()
         query_params = parse_qs(query_string)
-        return query_params.get(key, [None])[0] != None
+        return query_params.get(key, [None])[0] is not None
 
     def _get_from_qs(self, key):
         query_string = self.scope.get("query_string", b"").decode()
@@ -123,7 +123,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 )
             else:
                 return None
-        except:
+        except Exception:
             return None
 
     @database_sync_to_async
@@ -138,7 +138,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def _is_session_owner(self):
-        return self.session.user == self.user
+        return self.session and self.session.user == self.user
 
     @database_sync_to_async
     def _get_history(self):
@@ -155,7 +155,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.history.append({"role": role, "content": content})
 
     async def _send(self, type, data={}):
-        await self.send(json.dumps({"type": type, **data}))
+        await self.send(json.dumps({"type": type, "data": data}))
 
     async def _send_message(self, type, message):
         await self._send(type, {"message": message})
