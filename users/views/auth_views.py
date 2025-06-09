@@ -70,7 +70,6 @@ class LoginView(APIView):
                     "id": user.id,
                     "username": user.username,
                     "email": user.email,
-                    "is_instructor": user.is_instructor,
                     "is_student": user.is_student,
                 },
             },
