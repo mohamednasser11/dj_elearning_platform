@@ -8,6 +8,7 @@ Welcome to the backend project! Please follow these steps to set up the environm
 Before you begin, ensure you have the following installed:
 - **Python 3.8 or higher**: Required to run the Django application.
 - **PostgreSQL 16 or higher**: Required as the database for this project.
+- **Ollama 0.9.0 or higher with gemma3**: Required to run the AI.
 
 ## 1. Create a New Virtual Environment
 
@@ -80,7 +81,7 @@ python manage.py migrate
 To start your django server use the following commands
 
 ```bash
-python manage.py runserver
+daphne e_learning_platform.asgi:application --port 8000
 ```
 
 ## 6. Deactivate the Virtual Environment
