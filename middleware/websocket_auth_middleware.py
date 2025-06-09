@@ -15,7 +15,12 @@ class WebSocketJWTAuthMiddleware:
             await send(
                 {
                     "type": "websocket.send",
-                    "text": json.dumps({"type": "error", "message": message}),
+                    "text": json.dumps(
+                        {
+                            "type": "error",
+                            "data": {"message": message},
+                        }
+                    ),
                 }
             )
             await send({"type": "websocket.close", "code": 4000})

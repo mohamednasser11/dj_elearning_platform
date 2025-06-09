@@ -13,6 +13,15 @@ from tools.AI.AI_model_service import AIModelService
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.is_streaming = False
+        self.stream_task = None
+        self.user = None
+        self.course = None
+        self.session = None
+        self.history = []
+
     async def connect(self):
         await self.accept()
 
@@ -38,13 +47,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 return
 
             self.history = await self._get_history()
-            await self._send("session.resume", {"history": self.history})
+            await self._send("session.resume", {"history": self.history[1:]})
         else:
             self.session = None
             self.history = []
 
     async def disconnect(self, code):
-        pass
+        if self.stream_task and not self.stream_task.done():
+            self.stream_task.cancel()
 
     async def receive(self, text_data=None, bytes_data=None):
         try:
@@ -64,29 +74,44 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 return
 
             text_data_json = json.loads(text_data)
-            inbound_message = text_data_json.get("message", "")
 
-            if not inbound_message.strip():
-                await self._send_error("Empty message")
+            type = text_data_json.get("type", None)
+            if type is None:
+                await self._send_error("type not provided")
                 return
 
-            await self._send("stream.start")
+            data = text_data_json.get("data", None)
+            if data is None:
+                await self._send_error("data not provided")
+                return
 
-            await self._append_history("user", inbound_message)
+            match type:
+                case "send":
+                    if self.is_streaming and self.stream_task:
+                        self.stream_task.cancel()
+                        await asyncio.sleep(0.1)
 
-            model = AIModelService()
-            stream = model.chat(self.history)
+                    message = data.get("message", None)
+                    if not message or not message.strip():
+                        await self._send_error("Empty message")
+                        return
 
-            outbound_message = ""
-            for chunk in stream:
-                response = chunk["message"]["content"]
-                outbound_message += response
-                await self._send_message("stream.chunk", response)
-                await asyncio.sleep(0)  # to force yield
+                    await self._append_history("user", message)
 
-            await self._append_history("assistant", outbound_message)
-
-            await self._send("stream.end")
+                    self.is_streaming = True
+                    self.stream_task = asyncio.create_task(
+                        self._handle_stream_response()
+                    )
+                case "cancel":
+                    if self.stream_task:
+                        self.stream_task.cancel()
+                        await asyncio.sleep(0.1)
+                    else:
+                        await self._send_error("no task to cancel")
+                        return
+                case _:
+                    await self._send_error("invalid type")
+                    return
 
         except UnicodeDecodeError:
             await self._send_error("Invalid binary data format")
@@ -94,6 +119,39 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self._send_error("Invalid JSON format")
         except Exception as e:
             await self._send_error(str(e))
+
+    async def _handle_stream_response(self):
+        outbound_message = ""
+        try:
+            await self._send("stream.start")
+
+            model = AIModelService()
+            stream = model.chat(self.history)
+
+            async for chunk in self._stream_generator(stream):
+                response = chunk["message"]["content"]
+                outbound_message += response
+                await self._send_message("stream.chunk", response)
+
+                if not self.is_streaming:
+                    break
+
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            await self._send_error(str(e))
+        finally:
+            await self._append_history("assistant", outbound_message)
+            await self._send("stream.end")
+            self.is_streaming = False
+            self.stream_task = None
+
+    async def _stream_generator(self, stream):
+        for chunk in stream:
+            if not self.is_streaming:
+                break
+            yield chunk
+            await asyncio.sleep(0)
 
     def _has_qs(self, key):
         query_string = self.scope.get("query_string", b"").decode()
