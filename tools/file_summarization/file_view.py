@@ -39,13 +39,13 @@ class FileSummerizationView(APIView):
             fileSerializer = self.serializer_class(data=request.data)
             if fileSerializer.is_valid():
                 # file_processor = None
-                request.session["file_id"] = fileSerializer.validated_data[
-                    "file"
-                ].fileId
+                request.session["file_id"] = fileSerializer.validated_data["file"].fileId
+
                 file_processor_types = {
                     "application/pdf": PDFProcessor(),
                     "application/text": TextFileProcessor(),
                 }
+
                 if file_processor_types.get(
                     fileSerializer.validated_data["file"].content_type
                 ):
@@ -108,7 +108,7 @@ class FileSummerizationView(APIView):
             return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class QuestiouGenerationView(APIView):
+class QuestionGenerationView(APIView):
     queryset = FileUploadModel.objects.all()
     serializer_class = FileSerializer
     permission_classes = [InstructorPermission | StudentPermission]
@@ -144,10 +144,11 @@ class QuestiouGenerationView(APIView):
                 if processedText:
                     # save and send processed text to AI model
                     ai_model_service = AIModelService()
-                    prompt_template = """
+                    prompt_template = f"""
                     [System] You are a helpful assistant for elearning site. Analyze this document and respond to the user's request.
                     [Document] {processedText}
-                    [User] Create Questions for this Document and rank them from easy to hard.
+                    [User] Create {fileSerializer.validated_data['number_of_questions']} Questions for this Document make sure you use a criteria that will encourage learning.
+                    Question needs to be at {fileSerializer.validated_data['level']} level.
                     """
                     response = ai_model_service.generate(prompt_template)
                     return Response(response, status=status.HTTP_201_CREATED)
