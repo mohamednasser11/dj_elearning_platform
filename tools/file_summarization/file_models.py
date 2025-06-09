@@ -9,6 +9,8 @@ class FileUploadModel(models.Model):
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="file_uploads"
     )
+    level = models.CharField(max_length=50)
+    number_of_questions = models.IntegerField(default=0)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

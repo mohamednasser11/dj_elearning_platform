@@ -6,7 +6,7 @@ from .file_models import FileUploadModel
 class FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = FileUploadModel
-        fields = ["fileId", "fileName", "file", "created_at", "updated_at"]
+        fields = ["fileId", "fileName", "file", "level", "number_of_questions", "created_at", "updated_at"]
 
     def create(self, validated_data):
         if self.context["request"].content_type in [
