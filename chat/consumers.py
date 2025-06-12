@@ -167,7 +167,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def _get_course(self):
         course_id = self._get_from_qs("course_id")
         if course_id:
-            return Course.objects.get(courseId=course_id)
+            try:
+                return Course.objects.get(courseId=course_id)
+            except Exception:
+                return None
         else:
             return None
 
