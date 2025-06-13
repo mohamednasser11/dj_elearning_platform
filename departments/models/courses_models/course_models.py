@@ -25,6 +25,12 @@ class Course(models.Model):
         verbose_name="Instructor",
     )
     rating = models.DecimalField(default=0, max_digits=3, decimal_places=1)
+    field = models.CharField(
+        max_length=100,
+        verbose_name="Course Field",
+        blank=True,
+        null=True
+    )
     number_of_students = models.PositiveIntegerField(default=0)
     image_url = models.URLField(
         max_length=500,

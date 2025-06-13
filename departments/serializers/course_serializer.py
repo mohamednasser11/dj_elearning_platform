@@ -5,6 +5,6 @@ from ..models.departments_models import Departments
 class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model= Course
-        fields= ['courseId', 'title', 'description', 'price', 'departmentId', 'instructorId', 'image_url', 'rating', 'number_of_students', 'created_at', 'updated_at']
+        fields= ['courseId', 'title', 'description', 'price', 'departmentId', 'instructorId', 'image_url', 'rating', 'number_of_students', 'field', 'created_at', 'updated_at']
         
 
