@@ -136,6 +136,8 @@ class QuestionGenerationView(APIView):
                     )
 
                 file_context = FileProcessorContext(file_processor)
+                number_of_questions = fileSerializer.validated_data.get('number_of_questions', 10)
+                question_levels = fileSerializer.validated_data.get('level', 'easy')
                 fileSerializer.save()
                 processedText = file_context.process(
                     fileSerializer.validated_data["file"].name
@@ -147,8 +149,8 @@ class QuestionGenerationView(APIView):
                     prompt_template = f"""
                     [System] You are a helpful assistant for elearning site. Analyze this document and respond to the user's request.
                     [Document] {processedText}
-                    [User] Create {fileSerializer.validated_data['number_of_questions']} Questions for this Document make sure you use a criteria that will encourage learning.
-                    Question needs to be at {fileSerializer.validated_data['level']} level.
+                    [User] Create {number_of_questions} Questions for this Document make sure you use a criteria that will encourage learning.
+                    Question needs to be at {question_levels} level.
                     """
                     response = ai_model_service.generate(prompt_template)
                     return Response(response, status=status.HTTP_201_CREATED)
