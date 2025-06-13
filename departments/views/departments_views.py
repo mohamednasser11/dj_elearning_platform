@@ -1,3 +1,4 @@
+import json
 from rest_framework import generics, status
 from rest_framework.response import Response 
 from departments.models.departments_models import Departments
@@ -11,7 +12,7 @@ class CreateDepartments(generics.ListCreateAPIView):
     permission_classes = [InstructorPermission]
 
     def post(self, request):
-        if self.serializer_class.is_valid():
+        if self.serializer_class(data=json.loads(request.body)).is_valid():
             super().post(request)
             return Response({"message": "created successfully"}, status=status.HTTP_201_CREATED)
         return Response({"message": "invalid data"}, status=status.HTTP_400_BAD_REQUEST)

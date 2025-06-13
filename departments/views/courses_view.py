@@ -1,3 +1,4 @@
+import json
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
@@ -31,10 +32,11 @@ class CoursesView(APIView):
     @permission_classes([InstructorPermission])
     def post(self, request):
         try:
-            if self.serializer_class.is_valid():
-                self.serializer_class.save()
-                return Response(self.serializer_class.cleaned_data, status=status.HTTP_201_CREATED)
-            return Response(self.serializer_class.errors, status=status.HTTP_400_BAD_REQUEST)
+            serialized_course = self.serializer_class(data=json.loads(request.body))
+            if serialized_course.is_valid():
+                serialized_course.save()
+                return Response({"message": "created successfully"}, status=status.HTTP_201_CREATED)
+            return Response(serialized_course.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -53,10 +55,11 @@ class CoursesView(APIView):
     def patch(self, request, courseId):
         try:
             course = self.queryset.get(id=courseId)
-            if self.serializer_class.is_valid() and course is not None:
-                self.serializer_class.save()
-                return Response(self.serializer_class.data, status=status.HTTP_200_OK)
-            return Response(self.serializer_class.errors, status=status.HTTP_400_BAD_REQUEST)
+            serialized_new_course = self.serializer_class(data=json.loads(request.body))
+            if serialized_new_course.is_valid() and course is not None:
+                serialized_new_course.save()
+                return Response(serialized_new_course.data, status=status.HTTP_200_OK)
+            return Response(serialized_new_course.errors, status=status.HTTP_400_BAD_REQUEST)
         except Course.DoesNotExist:
             return Response({"message": "Course Does not exist"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
