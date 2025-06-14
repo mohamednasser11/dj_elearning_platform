@@ -35,6 +35,7 @@ class WebSocketJWTAuthMiddleware:
             scope["user"] = await self.get_user_from_token(token)
         except AuthenticationFailed:
             await error("Invalid token")
+            return
 
         return await self.inner(scope, receive, send)
 
