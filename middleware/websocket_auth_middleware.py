@@ -10,31 +10,20 @@ class WebSocketJWTAuthMiddleware:
         self.inner = inner
 
     async def __call__(self, scope, receive, send):
-        async def error(message):
+        async def error(code, reason):
             await send({"type": "websocket.accept"})
-            await send(
-                {
-                    "type": "websocket.send",
-                    "text": json.dumps(
-                        {
-                            "type": "error",
-                            "data": {"message": message},
-                        }
-                    ),
-                }
-            )
-            await send({"type": "websocket.close", "code": 4000})
+            await send({"type": "websocket.close", "code": code, "reason": reason})
 
         token = self.get_token_from_scope(scope)
 
         if not token:
-            await error("Authorization token required")
+            await error(4000, "Missing token")
             return
 
         try:
             scope["user"] = await self.get_user_from_token(token)
         except AuthenticationFailed:
-            await error("Invalid token")
+            await error(4001, "Invalid token")
             return
 
         return await self.inner(scope, receive, send)

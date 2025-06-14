@@ -28,22 +28,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.user = self.scope["user"]
         self.course = await self._get_course()
         if not self.course:
-            await self._send_error("Course does not exist")
+            await self.close(4011, "Course does not exist")
             return
 
         if not await self._is_enrolled():
-            await self._send_error("User not enrolled")
+            await self.close(4013, "User not enrolled")
             return
 
         if self._has_qs("session_id"):
             self.session = await self._get_session()
 
             if not self.session:
-                await self._send_error("Session does not exist")
+                await self.close(4012, "Session does not exist")
                 return
 
             if not await self._is_session_owner():
-                await self._send_error("Unauthorized")
+                await self.close(4002, "Unauthorized")
                 return
 
             self.history = await self._get_history()
@@ -70,19 +70,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 text_data = bytes_data.decode("utf-8")
 
             if not text_data:
-                await self._send_error("Empty message")
+                await self.close(4004, "Empty message")
                 return
 
             text_data_json = json.loads(text_data)
 
             type = text_data_json.get("type", None)
             if type is None:
-                await self._send_error("type not provided")
+                await self.close(4006, "type not provided")
                 return
 
             data = text_data_json.get("data", None)
             if data is None:
-                await self._send_error("data not provided")
+                await self.close(4008, "data not provided")
                 return
 
             match type:
@@ -93,7 +93,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
                     message = data.get("message", None)
                     if not message or not message.strip():
-                        await self._send_error("Empty message")
+                        await self.close(4009, "Empty message")
                         return
 
                     await self._append_history("user", message)
@@ -107,18 +107,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         self.stream_task.cancel()
                         await asyncio.sleep(0.1)
                     else:
-                        await self._send_error("no task to cancel")
+                        await self.close(4010, "no task to cancel")
                         return
                 case _:
-                    await self._send_error("invalid type")
+                    await self.close(4007, "invalid type")
                     return
 
         except UnicodeDecodeError:
-            await self._send_error("Invalid binary data format")
+            await self.close(4003, "Invalid binary data format")
         except json.JSONDecodeError:
-            await self._send_error("Invalid JSON format")
+            await self.close(4005, "Invalid JSON format")
         except Exception as e:
-            await self._send_error(str(e))
+            await self.close(5000, str(e))
 
     async def _handle_stream_response(self):
         outbound_message = ""
@@ -139,7 +139,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except asyncio.CancelledError:
             pass
         except Exception as e:
-            await self._send_error(str(e))
+            await self.close(5000, str(e))
         finally:
             await self._append_history("assistant", outbound_message)
             await self._send("stream.end")
@@ -225,11 +225,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def _send_message(self, type, message):
         await self._send(type, {"message": message})
-
-    async def _send_error(self, message, code=4000, close=True):
-        await self._send_message("error", message)
-        if close:
-            await self.close(code)
 
     @database_sync_to_async
     def _generate_system_prompt(self):
