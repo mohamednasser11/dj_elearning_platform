@@ -207,7 +207,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "-created_at"
         )
         return [
-            {"role": msg.role, "content": msg.content} for msg in reversed(messages)
+            {
+                "role": msg.role,
+                "content": msg.content,
+                "timestamp": msg.created_at.isoformat(),
+            }
+            for msg in reversed(messages)
         ]
 
     @database_sync_to_async
