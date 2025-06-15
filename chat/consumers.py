@@ -46,9 +46,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.close(4002, "Unauthorized")
                 return
 
+            await self._send("established")
             self.history = await self._get_history()
             await self._send("session.resume", {"history": self.history[1:]})
         else:
+            await self._send("established")
             self.session = None
             self.history = []
 
@@ -58,14 +60,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data=None, bytes_data=None):
         try:
-            if not self.session:
-                self.session = await self._create_session()
-                await self._append_history(
-                    "system", await self._generate_system_prompt()
-                )
-                self.history = await self._get_history()
-                await self._send("session.new", {"session_id": str(self.session.id)})
-
             if bytes_data:
                 text_data = bytes_data.decode("utf-8")
 
@@ -87,6 +81,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             match type:
                 case "send":
+                    if not self.session:
+                        self.session = await self._create_session()
+                        await self._append_history(
+                            "system", await self._generate_system_prompt()
+                        )
+                        self.history = await self._get_history()
+                        await self._send(
+                            "session.new", {"session_id": str(self.session.id)}
+                        )
+
                     if self.is_streaming and self.stream_task:
                         self.stream_task.cancel()
                         await asyncio.sleep(0.1)
@@ -102,16 +106,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     self.stream_task = asyncio.create_task(
                         self._handle_stream_response()
                     )
+
+                case "end":
+                    if self.stream_task:
+                        self.stream_task.cancel()
+                        await asyncio.sleep(0.1)
+
+                    self.history = []
+                    self.session = None
+
                 case "cancel":
                     if self.stream_task:
                         self.stream_task.cancel()
                         await asyncio.sleep(0.1)
                     else:
                         await self.close(4010, "no task to cancel")
-                        return
+
                 case _:
                     await self.close(4007, "invalid type")
-                    return
 
         except UnicodeDecodeError:
             await self.close(4003, "Invalid binary data format")
