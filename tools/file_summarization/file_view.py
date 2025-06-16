@@ -14,7 +14,7 @@ from users.utils.permission_management import InstructorPermission, StudentPermi
 def get_file_processor(file):
     file_processor_types = {
         "application/pdf": PDFProcessor(),
-        "application/text": TextFileProcessor(),
+        "text/plain": TextFileProcessor(),
     }
     return file_processor_types.get(file.content_type, None)
 
