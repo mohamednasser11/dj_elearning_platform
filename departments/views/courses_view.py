@@ -20,13 +20,23 @@ class CoursesView(APIView):
                 course = self.queryset.get(courseId = courseId)
                 serializer = self.serializer_class(course)
                 return Response(serializer.data, status=status.HTTP_200_OK)
+            elif request.GET.get('fields'):
+                fields = self.serializer_class.get_all_coruses_fields()
+                return Response({
+                    "fields": fields
+                }, status=status.HTTP_200_OK)
             else:
                 courses = self.queryset.all()
                 limit = int(request.GET.get('limit', 10))
-                offset = int(request.GET.get('offset', 10))
+                offset = int(request.GET.get('offset', 0))
                 serializer = self.serializer_class(courses, many=True)
                 limited_data = serializer.data[offset:offset+limit]
-                return Response(limited_data, status=status.HTTP_200_OK)
+                count = self.serializer_class.get_courses_count()
+               
+                return Response({
+                    "data": limited_data,
+                    "count": count
+                }, status=status.HTTP_200_OK)
         except Course.DoesNotExist:
             return Response({"message": "Course Does not exist"}, status=status.HTTP_404_NOT_FOUND)
     
