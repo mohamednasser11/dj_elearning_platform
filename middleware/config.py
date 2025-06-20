@@ -1,7 +1,9 @@
 VALID_URLS = [
     "/api/v1/users/login/",
     "/api/v1/users/register/",
+]
+
+VALID_PARENT_URLS = [
     "/admin/",
-    "/admin/login/?next=/admin/",
-    "/admin/login/",
+    "/media/courses/thumbnails/",
 ]

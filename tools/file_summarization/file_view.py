@@ -1,3 +1,4 @@
+import os
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -7,153 +8,163 @@ from ..services.fileProcessors.file_processors import FileProcessorContext
 from ..services.fileProcessors.pdf_file_processor import PDFProcessor
 from ..services.fileProcessors.text_file_processor import TextFileProcessor
 from ..AI.AI_model_service import AIModelService
+from users.utils.permission_management import InstructorPermission, StudentPermission
+
+
+def get_file_processor(file):
+    file_processor_types = {
+        "application/pdf": PDFProcessor(),
+        "text/plain": TextFileProcessor(),
+    }
+    return file_processor_types.get(file.content_type, None)
 
 
 class FileSummerizationView(APIView):
     queryset = FileUploadModel.objects.all()
     serializer_class = FileSerializer
+    permission_classes = [StudentPermission]
 
-    def get(self, request, fileId):
+    def get(self, _, fileId):
         try:
-            if fileId is not None:
-                file = self.queryset.objects.get(id=fileId)
-                fileSerializer = self.serializer_class(file)
-                print(f"fileSerializer: {fileSerializer.data}")
-                if fileSerializer.is_valid() and file.is_deleted is False:
-                    return Response(fileSerializer.data, status=status.HTTP_200_OK)
+            file = self.queryset.get(id=fileId)
+            if file.is_deleted is False:
                 return Response(
-                    "This file doesn't exist or deleted",
-                    status=status.HTTP_404_NOT_FOUND,
+                    self.serializer_class(file).data, status=status.HTTP_200_OK
                 )
-            else:
-                return Response(
-                    "This is the file summerization view", status=status.HTTP_200_OK
-                )
-        except Exception as e:
-            return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    def post(self, request):
-        try:
-            fileSerializer = self.serializer_class(data=request.data)
-            print(f"fileSerializer: {fileSerializer}")
-            if fileSerializer.is_valid():
-                # file_processor = None
-                file_processor_types = {
-                    "application/pdf": PDFProcessor(),
-                    "application/text": TextFileProcessor(),
-                }
-                if file_processor_types.get(
-                    fileSerializer.validated_data["file"].content_type
-                ):
-                    file_processor = file_processor_types.get(
-                        fileSerializer.validated_data["file"].content_type
-                    )
-                else:
-                    return Response(
-                        "File Processor Not implemented",
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-
-                file_context = FileProcessorContext(file_processor)
-                fileSerializer.save()
-                processedText = file_context.process(
-                    fileSerializer.validated_data["file"].name
-                )
-                print(f"processedText: {processedText}")
-                if processedText:
-                    # save and send processed text to AI model
-                    ai_model_service = AIModelService()
-                    prompt_template = """
-                    [System] You are a helpful assistant. Analyze this document and respond to the user's request.
-                    [Document] {processedText}
-                    [User] Summarize the key points in bullet points.
-                    """
-                    response = ai_model_service.generate(prompt_template)
-                    return Response(response, status=status.HTTP_201_CREATED)
-                else:
-                    return Response(
-                        "File not processed", status=status.HTTP_400_BAD_REQUEST
-                    )
-            else:
-                return Response(
-                    fileSerializer.errors, status=status.HTTP_400_BAD_REQUEST
-                )
-        except Exception as e:
-            return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    def put(self, request):
-        try:
             return Response(
-                "This is the file summerization view", status=status.HTTP_200_OK
+                "This file doesn't exist or deleted",
+                status=status.HTTP_404_NOT_FOUND,
             )
         except Exception as e:
             return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def delete(self, request, fileId):
-        try:
-            if fileId is not None:
-                file = self.queryset.objects.get(id=fileId)
-                if file:
-                    file.is_deleted = True
-                    file.save()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            else:
-                raise Exception("File ID not provided")
-        except Exception as e:
-            return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-
-class QuestiouGenerationView(APIView):
-    queryset = FileUploadModel.objects.all()
-    serializer_class = FileSerializer
-
     def post(self, request):
         try:
-            fileSerializer = self.serializer_class(data=request.data)
-            print(f"fileSerializer: {fileSerializer}")
-            if fileSerializer.is_valid():
-                # file_processor = None
-                file_processor_types = {
-                    "application/pdf": PDFProcessor(),
-                    "application/text": TextFileProcessor(),
-                }
-                if file_processor_types.get(
-                    fileSerializer.validated_data["file"].content_type
-                ):
-                    file_processor = file_processor_types.get(
-                        fileSerializer.validated_data["file"].content_type
-                    )
-                else:
+            serialized_file = self.serializer_class(
+                data=request.data, context={"request": request}
+            )
+            if serialized_file.is_valid():
+                file_processor = get_file_processor(
+                    serialized_file.validated_data["file"]
+                )
+
+                if file_processor is None:
                     return Response(
                         "File Processor Not implemented",
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-                file_context = FileProcessorContext(file_processor)
-                fileSerializer.save()
-                processedText = file_context.process(
-                    fileSerializer.validated_data["file"].name
-                )
-                print(f"processedText: {processedText}")
-                if processedText:
-                    # save and send processed text to AI model
-                    ai_model_service = AIModelService()
-                    prompt_template = """
-                    [System] You are a helpful assistant for elearning site. Analyze this document and respond to the user's request.
-                    [Document] {processedText}
-                    [User] Create Questions for this Document and rank them from easy to hard.
-                    """
-                    response = ai_model_service.generate(prompt_template)
-                    return Response(response, status=status.HTTP_201_CREATED)
-                else:
-                    return Response(
-                        "File not processed", status=status.HTTP_400_BAD_REQUEST
+                try:
+                    serialized_file.save()
+                    instance = serialized_file.instance
+
+                    file_context = FileProcessorContext(file_processor)
+                    processed_text = file_context.process(
+                        os.path.basename(instance.file.name)
                     )
+
+                    model = AIModelService()
+                    response = model.generate(
+                        f"""
+                            SYSTEM INSTRUCTION:
+                            Summarize the following document into bullet points. The length of the summary should be `{instance.level}`.
+
+                            STRICT OUTPUT FORMAT:
+                            - Plain text with '-' for the bullets
+                            - Begin IMMEDIATELY with bullet points
+                            - Zero introductory/closing text
+
+                            DOCUMENT:
+                            {processed_text}
+                        """
+                    )
+                    return Response(response, status=status.HTTP_201_CREATED)
+                except Exception as e:
+                    return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
             else:
                 return Response(
-                    fileSerializer.errors, status=status.HTTP_400_BAD_REQUEST
+                    serialized_file.errors, status=status.HTTP_400_BAD_REQUEST
                 )
         except Exception as e:
             return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    def delete(self, _, fileId):
+        try:
+            file = self.queryset.get(id=fileId)
+            if file:
+                file.is_deleted = True
+                file.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class QuestionGenerationView(APIView):
+    queryset = FileUploadModel.objects.all()
+    serializer_class = FileSerializer
+    permission_classes = [InstructorPermission | StudentPermission]
+
+    def post(self, request):
+        try:
+            serialized_file = self.serializer_class(
+                data=request.data, context={"request": request}
+            )
+            if serialized_file.is_valid():
+                file_processor = get_file_processor(
+                    serialized_file.validated_data["file"]
+                )
+
+                if file_processor is None:
+                    return Response(
+                        "File Processor Not implemented",
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                try:
+                    serialized_file.save()
+                    instance = serialized_file.instance
+
+                    file_context = FileProcessorContext(file_processor)
+                    processed_text = file_context.process(
+                        os.path.basename(instance.file.name)
+                    )
+
+                    model = AIModelService()
+                    response = model.generate(
+                        f"""
+                            SYSTEM INSTRUCTION:
+                            Generate exactly `{instance.number_of_questions}` exam questions at `{instance.level}` difficulty.
+
+                            STRICT OUTPUT FORMAT:
+                            - Plain text
+                            - Begin IMMEDIATELY with Question 1
+                            - Zero introductory/closing text
+                            - Format
+                                ```  
+                                [Question X] [Type]
+                                [Question text]
+                                [Answer]
+                                ```
+
+                            QUESTION REQUIREMENTS:
+                            - Vary types
+                                - `MC` (Multiple Choice): 4 options
+                                - `TF` (True/False): State assertion clearly
+                                - `SA` (Short Answer): Phrase to require 1-2 word responses
+                            - Content constraints
+                                - Test ONLY core concepts from provided text
+                                - Exclude peripheral/external knowledge
+
+                            DOCUMENT:
+                            {processed_text}
+                        """
+                    )
+                    return Response(response, status=status.HTTP_201_CREATED)
+                except Exception as e:
+                    return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response(
+                    serialized_file.errors, status=status.HTTP_400_BAD_REQUEST
+                )
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)

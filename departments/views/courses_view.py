@@ -1,41 +1,58 @@
+import json
 from rest_framework.views import APIView
 from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.decorators import permission_classes
 from users.models.user_model import User
 from ..models import Course
 from ..serializers import CourseSerializer
-from rest_framework.response import Response
-from ..forms import CoursePayloadValidation
+from users.utils.permission_management import InstructorPermission, StudentPermission
+from users.models.instructor_model import InstructorModel
 
 class CoursesView(APIView):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
 
+    @permission_classes([InstructorPermission | StudentPermission])
     def get(self, request, courseId = None):
         try:
             if courseId:
-                course = self.queryset.get(id=courseId)
+                course = self.queryset.get(courseId = courseId)
                 serializer = self.serializer_class(course)
                 return Response(serializer.data, status=status.HTTP_200_OK)
+            elif request.GET.get('fields'):
+                fields = self.serializer_class.get_all_coruses_fields()
+                return Response({
+                    "fields": fields
+                }, status=status.HTTP_200_OK)
             else:
                 courses = self.queryset.all()
-                limit = request.data.get('limit') or 10
-                offset = request.data.get('offset') or 0
+                limit = int(request.GET.get('limit', 10))
+                offset = int(request.GET.get('offset', 0))
                 serializer = self.serializer_class(courses, many=True)
                 limited_data = serializer.data[offset:offset+limit]
-                return Response(limited_data, status=status.HTTP_200_OK)
+                count = self.serializer_class.get_courses_count()
+               
+                return Response({
+                    "data": limited_data,
+                    "count": count
+                }, status=status.HTTP_200_OK)
         except Course.DoesNotExist:
             return Response({"message": "Course Does not exist"}, status=status.HTTP_404_NOT_FOUND)
-        
+    
     def post(self, request):
         try:
-            form = CoursePayloadValidation(request.data)
-            if form.is_valid():
-                form.save()
-                return Response(form.cleaned_data, status=status.HTTP_201_CREATED)
-            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+            serialized_course = self.serializer_class(
+                data=request.data, context={"request": request}
+            )
+            if serialized_course.is_valid( ):
+                serialized_course.save()
+                return Response(serialized_course.data, status=status.HTTP_201_CREATED)
+            return Response(serialized_course.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
+    @permission_classes([InstructorPermission])
     def delete(self, request, courseId):
         try:
             course = self.queryset.get(id=courseId)
@@ -46,14 +63,20 @@ class CoursesView(APIView):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    @permission_classes([InstructorPermission])
     def patch(self, request, courseId):
         try:
-            course = self.queryset.get(id=courseId)
-            form = CoursePayloadValidation(request.data, instance=course)
-            if form.is_valid():
-                form.save()
-                return Response(form.cleaned_data, status=status.HTTP_200_OK)
-            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+            data=json.loads(request.body)
+            course = self.queryset.get(courseId=courseId)
+            instructor = InstructorModel.objects.get(user=request.user)
+
+            # Inject the instructor ID into the data before serialization
+            data["instructorId"] = instructor.user_id
+            serialized_new_course = self.serializer_class(data=data)
+            if serialized_new_course.is_valid() and course is not None:
+                serialized_new_course.save()
+                return Response(serialized_new_course.data, status=status.HTTP_200_OK)
+            return Response(serialized_new_course.errors, status=status.HTTP_400_BAD_REQUEST)
         except Course.DoesNotExist:
             return Response({"message": "Course Does not exist"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
@@ -62,6 +85,7 @@ class CoursesView(APIView):
 class getDepartmentCourses(APIView):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
+    permission_classes = [StudentPermission | InstructorPermission]
 
     def get(self, request, departmentId):
         try:
@@ -78,6 +102,7 @@ class getDepartmentCourses(APIView):
 class PurchaseCoursesView(APIView):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
+    permission_classes = [StudentPermission]
 
     def post(self, request, courseId, userId):
         try:

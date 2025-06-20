@@ -4,10 +4,11 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from ..models import Departments, Course, CoursesLesson
 from ..serializers.lessons_serialzer import LessonSerializer
+from users.utils.permission_management import InstructorPermission, StudentPermission
 
 
 class LessonsView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, InstructorPermission | StudentPermission]
 
     def get(self, request, courseId, lessonId=None):
         try:
@@ -32,8 +33,11 @@ class LessonsView(APIView):
     def post(self, request, courseId):
         try:
             course = Course.objects.get(courseId=courseId)
-            request.data['courseId'] = course.courseId
-            serializer = LessonSerializer(data=request.data)
+            data = {
+                **request.data.dict(),
+                'courseId': course.courseId
+            }
+            serializer = LessonSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)

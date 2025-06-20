@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from ..models import User
+from ..models import User, Instructor
 from ..serializers import UserSerializer
 
 
@@ -45,7 +45,7 @@ class StudentsView(APIView):
 class InstructorsView(APIView):
     def get(self, request):
         try:
-            instructors = User.objects.filter(is_instructor=True)
+            instructors = Instructor.objects.get()
             serializer = UserSerializer(instructors, many=True)
             return Response(serializer.data, status= status.HTTP_200_OK)
         except Exception as e:

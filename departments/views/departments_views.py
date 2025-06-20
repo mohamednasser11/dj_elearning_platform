@@ -1,23 +1,28 @@
+import json
 from rest_framework import generics, status
 from rest_framework.response import Response 
-from rest_framework.views import APIView
 from departments.models.departments_models import Departments
 from ..serializers.departments_serializer import DepartmentSerializer
+from users.utils.permission_management import InstructorPermission
 
 
 class CreateDepartments(generics.ListCreateAPIView):
     queryset = Departments.objects.all()
     serializer_class = DepartmentSerializer
+    permission_classes = [InstructorPermission]
 
     def post(self, request):
-        super().post(request)
-        return Response({"message": "created successfully"}, status=status.HTTP_201_CREATED)
+        if self.serializer_class(data=json.loads(request.body)).is_valid():
+            super().post(request)
+            return Response({"message": "created successfully"}, status=status.HTTP_201_CREATED)
+        return Response({"message": "invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UpdateDestroyDepartment(generics.RetrieveUpdateDestroyAPIView):
     queryset = Departments.objects.all()
     serializer_class = DepartmentSerializer
     lookup_field = 'pk'
+    permission_classes = [InstructorPermission]
 
     def patch(self, request, *args, **kwargs):
         super().patch(request, *args, **kwargs)
