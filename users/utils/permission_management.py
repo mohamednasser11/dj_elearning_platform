@@ -30,6 +30,6 @@ class InstructorPermission(BaseRolePermission):
 
 class StudentPermission(BaseRolePermission):
     role_field = "student"
-    allowed_methods = ["GET"]
+    allowed_methods = ["GET", "POST"]
     message = "Student permission required"
 
