@@ -2,16 +2,14 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from django.http import JsonResponse
 from rest_framework import status
-from .config import VALID_URLS
+from .config import VALID_PARENT_URLS, VALID_URLS
+
 
 class AuthMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        if request.path.startswith("/admin/"):
-            return self.get_response(request)
-
         try:
             self.perform_authentication_if_needed(request)
         except AuthenticationFailed as e:
@@ -27,9 +25,12 @@ class AuthMiddleware:
 
     def is_public_path(self, path):
         """Returns True if the path is in the list of allowed public URLs."""
-        normalized_path = path.rstrip('/')
-        public_paths = [url.rstrip('/') for url in VALID_URLS]
-        return normalized_path in public_paths
+        normalized_path = path.rstrip("/")
+        public_paths = [url.rstrip("/") for url in VALID_URLS]
+        public_parent_paths = [url.rstrip("/") for url in VALID_PARENT_URLS]
+        return normalized_path in public_paths or any(
+            [normalized_path.startswith(parent) for parent in public_parent_paths]
+        )
 
     def extract_token_from_header(self, request):
         """Extracts and returns the JWT token from the Authorization header."""
