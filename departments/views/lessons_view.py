@@ -33,8 +33,11 @@ class LessonsView(APIView):
     def post(self, request, courseId):
         try:
             course = Course.objects.get(courseId=courseId)
-            request.data['courseId'] = course.courseId
-            serializer = LessonSerializer(data=request.data)
+            data = {
+                **request.data.dict(),
+                'courseId': course.courseId
+            }
+            serializer = LessonSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
