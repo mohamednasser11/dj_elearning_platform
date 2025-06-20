@@ -7,7 +7,7 @@ class CoursesLesson(models.Model):
     courseId = models.ForeignKey(Course, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     description = models.TextField()
-    video = models.FileField(upload_to='courses_lessons/videos/', blank=False)
+    video = models.FileField(upload_to='courses/lessons/videos/', blank=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
