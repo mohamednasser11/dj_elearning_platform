@@ -48,23 +48,13 @@ class CoursesView(APIView):
     
     def post(self, request):
         try:
-            data = json.loads(request.body)
-            print(f'user data: {request.user}')
-            # Get the instructor model associated with the authenticated user
-            instructor = InstructorModel.objects.get(user=request.user)
-
-            # Inject the instructor ID into the data before serialization
-            data["instructorId"] = instructor.user_id
-
-            serialized_course = self.serializer_class(data=data)
-            if serialized_course.is_valid():
+            serialized_course = self.serializer_class(
+                data=request.data, context={"request": request}
+            )
+            if serialized_course.is_valid( ):
                 serialized_course.save()
-                return Response({"message": "created successfully"}, status=status.HTTP_201_CREATED)
+                return Response(serialized_course.data, status=status.HTTP_201_CREATED)
             return Response(serialized_course.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        except InstructorModel.DoesNotExist:
-            return Response({"message": "User is not registered as an instructor"}, status=status.HTTP_403_FORBIDDEN)
-        
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
