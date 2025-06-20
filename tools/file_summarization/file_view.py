@@ -22,7 +22,7 @@ def get_file_processor(file):
 class FileSummerizationView(APIView):
     queryset = FileUploadModel.objects.all()
     serializer_class = FileSerializer
-    permission_classes = [StudentPermission]
+    permission_classes = [StudentPermission | InstructorPermission]
 
     def get(self, _, fileId):
         try:
@@ -66,6 +66,10 @@ class FileSummerizationView(APIView):
                     model = AIModelService()
                     response = model.generate(
                         f"""
+                            You are an AI-assistant designed to help students working on their subjects and studies.
+                            Your task is to summarize the provided document into concise bullet points that capture the key information and concepts.
+                            Follow the strict output format and requirements below to ensure clarity and relevance.
+                            Do not behave as a chatbot or humanize your response. you are only getting one request per user so there is no interactions.
                             SYSTEM INSTRUCTION:
                             Summarize the following document into bullet points. The length of the summary should be `{instance.level}`.
 

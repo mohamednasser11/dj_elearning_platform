@@ -25,6 +25,12 @@ class CoursesView(APIView):
                 return Response({
                     "fields": fields
                 }, status=status.HTTP_200_OK)
+            elif request.GET.get('userId') is not None:
+                userId = request.GET.get('userId')
+                user = User.objects.get(id=userId)
+                courses = user.courses.all()
+                serializer = self.serializer_class(courses, many=True)
+                return Response(serializer.data, status=status.HTTP_200_OK)
             else:
                 courses = self.queryset.all()
                 limit = int(request.GET.get('limit', 10))

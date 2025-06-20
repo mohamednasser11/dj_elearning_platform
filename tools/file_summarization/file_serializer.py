@@ -8,7 +8,7 @@ class FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = FileUploadModel
         fields = [
-            "id",
+            "fileId",
             "file",
             "level",
             "created_by",
