@@ -32,12 +32,7 @@ class Course(models.Model):
         null=True
     )
     number_of_students = models.PositiveIntegerField(default=0)
-    image_url = models.URLField(
-        max_length=500,
-        verbose_name="Course Image URL",
-        blank=True,
-        null=True
-    )
+    image_url = models.FileField(upload_to="courses/thumbnails/")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated At")
 
