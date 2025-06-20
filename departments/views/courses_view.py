@@ -38,7 +38,7 @@ class CoursesView(APIView):
                 serializer = self.serializer_class(courses, many=True)
                 limited_data = serializer.data[offset:offset+limit]
                 count = self.serializer_class.get_courses_count()
-                print(f'serializer: {serializer.data}, count: {count}')
+
                 return Response({
                     "data": limited_data,
                     "count": count
