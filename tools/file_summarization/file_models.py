@@ -7,7 +7,7 @@ User = get_user_model()
 
 
 class FileUploadModel(models.Model):
-    id = models.UUIDField(
+    fileId = models.UUIDField(
         primary_key=True, editable=False, default=uuid.uuid4, auto_created=True
     )
     file = models.FileField(upload_to="files/")
