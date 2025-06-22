@@ -7,4 +7,6 @@ VALID_URLS = [
 VALID_PARENT_URLS = [
     "/admin/",
     "/media/courses/thumbnails/",
+    "/api/v1/courses/",
+    "/api/v1/departments/",
 ]

@@ -5,18 +5,15 @@ import requests
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.decorators import permission_classes
 from users.models.user_model import User
 from ..models import Course
 from ..serializers import CourseSerializer
-from users.utils.permission_management import InstructorPermission, StudentPermission
 from users.models.instructor_model import InstructorModel
 
 class CoursesView(APIView):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
 
-    @permission_classes([InstructorPermission | StudentPermission])
     def get(self, request, courseId = None):
         try:
             if courseId:
@@ -96,7 +93,6 @@ class CoursesView(APIView):
                 {"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-    @permission_classes([InstructorPermission])
     def delete(self, request, courseId):
         try:
             course = self.queryset.get(id=courseId)
@@ -107,7 +103,6 @@ class CoursesView(APIView):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @permission_classes([InstructorPermission])
     def patch(self, request, courseId):
         try:
             data=json.loads(request.body)
@@ -129,7 +124,6 @@ class CoursesView(APIView):
 class getDepartmentCourses(APIView):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
-    permission_classes = [StudentPermission | InstructorPermission]
 
     def get(self, request, departmentId):
         try:
@@ -146,7 +140,6 @@ class getDepartmentCourses(APIView):
 class PurchaseCoursesView(APIView):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
-    permission_classes = [StudentPermission]
 
     def post(self, request, courseId, userId):
         try:

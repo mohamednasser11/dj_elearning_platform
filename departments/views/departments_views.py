@@ -9,7 +9,6 @@ from users.utils.permission_management import InstructorPermission
 class CreateDepartments(generics.ListCreateAPIView):
     queryset = Departments.objects.all()
     serializer_class = DepartmentSerializer
-    permission_classes = [InstructorPermission]
 
     def post(self, request):
         if self.serializer_class(data=json.loads(request.body)).is_valid():
@@ -22,7 +21,6 @@ class UpdateDestroyDepartment(generics.RetrieveUpdateDestroyAPIView):
     queryset = Departments.objects.all()
     serializer_class = DepartmentSerializer
     lookup_field = 'pk'
-    permission_classes = [InstructorPermission]
 
     def patch(self, request, *args, **kwargs):
         super().patch(request, *args, **kwargs)
