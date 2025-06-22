@@ -1,4 +1,7 @@
 import json
+from django.core.files.base import ContentFile
+from urllib.parse import urlparse
+import requests
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
@@ -45,18 +48,53 @@ class CoursesView(APIView):
                 }, status=status.HTTP_200_OK)
         except Course.DoesNotExist:
             return Response({"message": "Course Does not exist"}, status=status.HTTP_404_NOT_FOUND)
-    
+
     def post(self, request):
         try:
+            data = request.data.copy()
+
+            if "image_url" in data and isinstance(data["image_url"], str):
+                url = data["image_url"]
+
+                try:
+                    result = urlparse(url)
+                    if not all([result.scheme, result.netloc]):
+                        raise ValueError("Invalid URL")
+                except Exception:
+                    return Response(
+                        {"message": "Invalid URL provided in image_url"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                try:
+                    response = requests.get(url, timeout=5)
+                    response.raise_for_status()
+
+                    filename = url.split("/")[-1] or "downloaded_image"
+                    image_file = ContentFile(response.content, name=filename)
+                    data["image_url"] = image_file
+                except requests.RequestException as e:
+                    return Response(
+                        {"message": f"Failed to download image from URL: {str(e)}"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+            elif "image_url" in request.FILES:
+                data["image_url"] = request.FILES["image_url"]
+
             serialized_course = self.serializer_class(
-                data=request.data, context={"request": request}
+                data=data, context={"request": request}
             )
-            if serialized_course.is_valid( ):
+            if serialized_course.is_valid():
                 serialized_course.save()
                 return Response(serialized_course.data, status=status.HTTP_201_CREATED)
-            return Response(serialized_course.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                serialized_course.errors, status=status.HTTP_400_BAD_REQUEST
+            )
         except Exception as e:
-            return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @permission_classes([InstructorPermission])
     def delete(self, request, courseId):
