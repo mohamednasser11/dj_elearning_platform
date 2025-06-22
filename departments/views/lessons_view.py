@@ -13,13 +13,13 @@ class LessonsView(APIView):
     def get(self, request, courseId, lessonId=None):
         try:
             if lessonId and courseId:
-                course = Course.objects.get(id=courseId)
-                lesson = CoursesLesson.objects.filter(course=course).get(id=lessonId)
+                course = Course.objects.get(courseId=courseId)
+                lesson = CoursesLesson.objects.filter(course=course).get(lessonId=lessonId)
                 serializer = LessonSerializer(lesson)
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
-                course = Course.objects.get(id=courseId)
-                lessons = CoursesLesson.objects.filter(course=course)
+                course = Course.objects.get(courseId=courseId)
+                lessons = CoursesLesson.objects.filter(courseId=course)
                 serializer = LessonSerializer(lessons, many=True)
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
