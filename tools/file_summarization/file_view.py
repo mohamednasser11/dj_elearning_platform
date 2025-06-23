@@ -8,7 +8,6 @@ from ..services.fileProcessors.file_processors import FileProcessorContext
 from ..services.fileProcessors.pdf_file_processor import PDFProcessor
 from ..services.fileProcessors.text_file_processor import TextFileProcessor
 from ..AI.AI_model_service import AIModelService
-from users.utils.permission_management import InstructorPermission, StudentPermission
 
 
 def get_file_processor(file):
@@ -22,7 +21,7 @@ def get_file_processor(file):
 class FileSummerizationView(APIView):
     queryset = FileUploadModel.objects.all()
     serializer_class = FileSerializer
-    permission_classes = [StudentPermission | InstructorPermission]
+    permission_classes = []
 
     def get(self, _, fileId):
         try:
@@ -106,7 +105,7 @@ class FileSummerizationView(APIView):
 class QuestionGenerationView(APIView):
     queryset = FileUploadModel.objects.all()
     serializer_class = FileSerializer
-    permission_classes = [InstructorPermission | StudentPermission]
+    permission_classes = []
 
     def post(self, request):
         try:
